@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id                String    @id @db.VarChar(191)
+  name              String    @db.VarChar(100)
+  email             String    @unique @db.VarChar(254)
+  emailVerified     Boolean   @default(false)
+  image             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  privacyAccepted   Boolean   @default(false)
+  privacyAcceptedAt DateTime?
+  sessions          Session[]
+  accounts          Account[]
+  subjects          Subject[]
+  tasks             Task[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @db.VarChar(191)
+  token     String   @unique @db.VarChar(191)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?  @db.VarChar(191)
+  userAgent String?  @db.Text
+  userId    String   @db.VarChar(191)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @db.VarChar(191)
+  accountId             String    @db.VarChar(191)
+  providerId            String    @db.VarChar(191)
+  userId                String    @db.VarChar(191)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @db.VarChar(191)
+  identifier String   @db.VarChar(191)
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+model RateLimit {
+  id          String @id @default(cuid()) @db.VarChar(191)
+  key         String @unique @db.VarChar(191)
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limits")
+}
+
+model Subject {
+  id        String   @id @default(cuid()) @db.VarChar(191)
+  userId    String   @db.VarChar(191)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(100)
+  code      String?  @db.VarChar(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+
+  @@index([userId, name])
+  @@map("subjects")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Task {
+  id          String     @id @default(cuid()) @db.VarChar(191)
+  userId      String     @db.VarChar(191)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId   String?    @db.VarChar(191)
+  subject     Subject?   @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title       String     @db.VarChar(200)
+  description String?    @db.Text
+  dueDate     DateTime   @db.Date
+  priority    Priority   @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId, status, dueDate])
+  @@index([userId, subjectId])
+  @@index([subjectId])
+  @@map("tasks")
+}

@@ -23,3 +23,9 @@ test-results/
 # Local operating-system files
 .DS_Store
 Thumbs.db
+
+# Local tooling and generated Prisma Client
+.cache/
+src/generated/prisma/
+
+.next-test/

@@ -6,6 +6,9 @@ import tseslint from "typescript-eslint";
 export default defineConfig([
   globalIgnores([
     ".next/**",
+    ".next-test/**",
+    ".cache/**",
+    "src/generated/**",
     "out/**",
     "build/**",
     "coverage/**",
@@ -13,10 +16,7 @@ export default defineConfig([
   ]),
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx,mts,cts}"],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-    ],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
   },
   {
     files: ["src/**/*.{ts,tsx}"],
