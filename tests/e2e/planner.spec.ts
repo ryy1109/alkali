@@ -25,12 +25,13 @@ test("signup, ownership, planner lifecycle, real dashboard, and logout", async (
       errors.push(message.text());
   });
   await page.goto("/");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "Skip to content" }),
   ).toBeFocused();
   await page.screenshot({
-    path: ".cache/qa/landing-desktop.png",
+    path: `.cache/qa/landing-${page.viewportSize()?.width}.png`,
     fullPage: true,
   });
   await page.goto("/dashboard");
@@ -261,12 +262,13 @@ test("signup, ownership, planner lifecycle, real dashboard, and logout", async (
   await expect(page).toHaveURL(/\/login$/);
   expect((await owner.get("/api/tasks")).status()).toBe(401);
   await page.goto("/");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "Skip to content" }),
   ).toBeFocused();
   await page.screenshot({
-    path: ".cache/qa/landing-desktop.png",
+    path: `.cache/qa/landing-${page.viewportSize()?.width}.png`,
     fullPage: true,
   });
   await page.goto("/dashboard");

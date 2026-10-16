@@ -898,3 +898,9 @@ progress {
 .MuiCard-root.progress-card {
   background: var(--alkali-lavender);
 }
+
+@media (max-width: 440px) {
+  .hero-illustration .paper-card {
+    transform: rotate(-7deg) scale(0.88);
+  }
+}
