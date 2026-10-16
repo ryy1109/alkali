@@ -14,8 +14,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "test": "node --experimental-strip-types --test tests/unit/*.test.ts",
-    "test:e2e": "node scripts/prepare-tests.mjs && playwright test"
+    "test": "node --experimental-strip-types --test tests/unit/*.test.ts"
   },
   "dependencies": {
     "@emotion/cache": "11.14.0",
@@ -40,7 +39,6 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

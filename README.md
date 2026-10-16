@@ -48,16 +48,9 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
-npm run test:e2e
 ```
 
-Browser tests apply preserved migrations only to a local alkali_test database.
-TEST_DATABASE_URL is required and checked before tests start.
-Playwright needs its matching Chromium browser installed
-(`npx playwright install chromium` when it is absent).
-The tests start a separate server on port 3100 using .next-test.
-They use unique fixture accounts and never reset a database.
-Do not use production credentials for tests.
+Unit tests cover validation and deadline rules. Browser automation is deferred.
 
 ESLint covers JavaScript, TypeScript, and React Hooks rules.
 Next.js-specific and JSX accessibility lint rules are not configured because

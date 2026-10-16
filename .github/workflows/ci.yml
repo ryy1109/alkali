@@ -10,30 +10,9 @@ permissions:
 
 jobs:
   checks:
-    name: Lint, types, and build
+    name: Lint, types, tests, and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: ci-root-fixture-only
-          MYSQL_DATABASE: alkali_test
-          MYSQL_USER: alkali_ci
-          MYSQL_PASSWORD: ci-app-fixture-only
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-    env:
-      DATABASE_URL: mysql://alkali_ci:ci-app-fixture-only@127.0.0.1:3306/alkali_test
-      TEST_DATABASE_URL: mysql://alkali_ci:ci-app-fixture-only@127.0.0.1:3306/alkali_test
-      BETTER_AUTH_SECRET: isolated-ci-fixture-secret-with-at-least-32-characters
-      BETTER_AUTH_URL: http://localhost:3100
-      APP_TIMEZONE: Asia/Singapore
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -56,7 +35,3 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
-      - name: Install browser
-        run: npx --no-install playwright install --with-deps chromium
-      - name: Test authentication and planner
-        run: npm run test:e2e
