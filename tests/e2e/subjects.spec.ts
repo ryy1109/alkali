@@ -1,23 +1,16 @@
-import { test, expect } from "./fixtures";
+import { test, expect, signupAccount } from "./fixtures";
 
 test("student can create, edit, and delete a subject", async ({
   page,
   account,
   baseURL,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
 
   if (!baseURL) throw new Error("A test base URL is required.");
 
   // Authentication UI has its own test; prepare this test's session via API.
-  const signup = await page.request.post("/api/auth/sign-up/email", {
-    headers: { Origin: baseURL },
-    data: {
-      ...account,
-      confirmPassword: account.password,
-      privacyAccepted: true,
-    },
-  });
+  const signup = await signupAccount(page.request, account, baseURL);
   expect(signup.status()).toBe(200);
 
   let subjectEndpoint = "";

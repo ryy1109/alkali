@@ -116,6 +116,9 @@ model Task {
   subject     Subject?   @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   title       String     @db.VarChar(200)
   description String?    @db.Text
+  resourceUrl String?    @db.VarChar(2048)
+  estimatedMinutes Int?
+  startDate   DateTime?  @db.Date
   dueDate     DateTime   @db.Date
   priority    Priority   @default(MEDIUM)
   status      TaskStatus @default(TODO)

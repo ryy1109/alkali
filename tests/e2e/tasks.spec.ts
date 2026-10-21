@@ -1,10 +1,10 @@
 import type { Locator } from "@playwright/test";
-import { test, expect } from "./fixtures";
+import { test, expect, signupAccount } from "./fixtures";
 import { addDays, todayInSingapore } from "../../src/lib/dates";
 
-async function fillDueDate(dialog: Locator, date: string) {
+async function fillDueDate(dialog: Locator, date: string, label = /^Due date\b/) {
   const value = `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`;
-  const field = dialog.getByRole("group", { name: /^Due date\b/ });
+  const field = dialog.getByRole("group", { name: label });
   const input = field.getByRole("textbox", { includeHidden: true });
 
   // Focus MUI's visible field before editing its associated input.
@@ -19,17 +19,10 @@ test("student can manage a task and see dashboard progress", async ({
   account,
   baseURL,
 }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   if (!baseURL) throw new Error("A test base URL is required.");
 
-  const signup = await page.request.post("/api/auth/sign-up/email", {
-    headers: { Origin: baseURL },
-    data: {
-      ...account,
-      confirmPassword: account.password,
-      privacyAccepted: true,
-    },
-  });
+  const signup = await signupAccount(page.request, account, baseURL);
   expect(signup.status()).toBe(200);
 
   // Subject CRUD has its own browser test; prepare this task's subject via API.
@@ -48,7 +41,7 @@ test("student can manage a task and see dashboard progress", async ({
   let taskEndpoint = "";
 
   const taskRow = (title: string) =>
-    page.getByRole("row").filter({
+    page.getByRole("table", { name: /Your study tasks|Upcoming study deadlines/ }).getByRole("row").filter({
       has: page.getByRole("link", { name: title, exact: true }),
     });
 
@@ -76,6 +69,10 @@ test("student can manage a task and see dashboard progress", async ({
     await dialog.getByRole("combobox", { name: /^Subject\b/ }).click();
     await page.getByRole("option", { name: "Physics", exact: true }).click();
     await fillDueDate(dialog, originalDate);
+    await fillDueDate(dialog, today, /^Start date\b/);
+    await dialog.getByLabel("Resource link (optional)", { exact: true }).fill("https://example.test/physics");
+    await dialog.getByLabel("Estimated hours", { exact: true }).fill("1");
+    await dialog.getByLabel("Estimated minutes", { exact: true }).fill("30");
     await dialog.getByRole("combobox", { name: /^Priority\b/ }).click();
     await page.getByRole("option", { name: "High", exact: true }).click();
 
@@ -108,6 +105,9 @@ test("student can manage a task and see dashboard progress", async ({
         subjectId: subject.id,
         priority: "HIGH",
         status: "TODO",
+        resourceUrl: "https://example.test/physics",
+        estimatedMinutes: 90,
+        startDate: today + "T00:00:00.000Z",
       }),
     );
   });
@@ -122,6 +122,9 @@ test("student can manage a task and see dashboard progress", async ({
       .getByLabel("Description (optional)", { exact: true })
       .fill("Finish the practice questions and check the answers.");
     await fillDueDate(dialog, editedDate);
+    await dialog.getByLabel("Resource link (optional)", { exact: true }).fill("https://example.test/revision");
+    await dialog.getByLabel("Estimated hours", { exact: true }).fill("2");
+    await dialog.getByLabel("Estimated minutes", { exact: true }).fill("15");
     await dialog.getByRole("combobox", { name: /^Priority\b/ }).click();
     await page.getByRole("option", { name: "Medium", exact: true }).click();
     await dialog.getByRole("combobox", { name: /^Status\b/ }).click();
@@ -152,8 +155,40 @@ test("student can manage a task and see dashboard progress", async ({
         subjectId: subject.id,
         priority: "MEDIUM",
         status: "IN_PROGRESS",
+        estimatedMinutes: 135,
+        resourceUrl: "https://example.test/revision",
       }),
     );
+  });
+
+  await test.step("Show planning details and clear optional values", async () => {
+    await taskRow(editedTitle).getByRole("link", { name: editedTitle, exact: true }).click();
+    await expect(page.getByText("2 hours 15 minutes", { exact: true })).toBeVisible();
+    const resource = page.getByRole("link", { name: /https:\/\/example.test\/revision/ });
+    await expect(resource).toHaveAttribute("target", "_blank");
+    await expect(resource).toHaveAttribute("rel", "noopener noreferrer");
+    await page.reload();
+    await expect(resource).toBeVisible();
+    await page.getByRole("button", { name: "Edit task", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: /^Edit task(?: Close dialog)?$/ });
+    await dialog.getByLabel("Resource link (optional)", { exact: true }).fill("");
+    await dialog.getByLabel("Estimated hours", { exact: true }).fill("");
+    await dialog.getByLabel("Estimated minutes", { exact: true }).fill("");
+    const startField = dialog.getByRole("group", { name: /^Start date\b/ });
+    await startField.click();
+    await startField.getByRole("textbox", { includeHidden: true }).fill("");
+    await startField.getByRole("textbox", { includeHidden: true }).press("Tab");
+    const saved = page.waitForResponse((r) => r.url() === taskEndpoint && r.request().method() === "PATCH");
+    await dialog.getByRole("button", { name: "Save task", exact: true }).click();
+    expect((await saved).status()).toBe(200);
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("No estimate set", { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("No start date set", { exact: true })).toBeVisible();
+    await expect(page.getByText("No link added", { exact: true })).toBeVisible();
+    const stored = await page.request.get(taskEndpoint);
+    expect(await stored.json()).toEqual(expect.objectContaining({ resourceUrl: null, startDate: null, estimatedMinutes: null }));
+    await page.goto("/tasks");
   });
 
   await test.step("Search tasks and check pending dashboard counts", async () => {

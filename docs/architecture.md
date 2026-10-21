@@ -54,6 +54,23 @@ Pending includes To do and In progress. Completed counts only Completed.
 The progress percentage is completed / all tasks; zero when no tasks exist.
 Dashboard queries run in one transaction and use actual per-user records.
 
+The monthly calendar defaults to the current Singapore month; a validated
+YYYY-MM query selects another month (1900 through 9999). Invalid or repeated
+month parameters fall back to the current month. It queries all owned tasks
+within that month, including completed tasks, independently of the eight-item
+upcoming limit. The calendar places tasks on due dates, not across planned ranges.
+
+## Task work planning
+
+Tasks have nullable resourceUrl (up to 2,048 characters), estimatedMinutes
+(whole minutes from 1 through 525,600), and startDate (MySQL DATE).
+Only HTTP/HTTPS resource links without embedded credentials are accepted;
+links open in a new tab with noopener/noreferrer and are never fetched by the server.
+An optional start date cannot be later than the existing due date. Estimates
+and date ranges are independent and do not automatically change task status.
+Empty fields clear saved values. The completion-only PATCH changes status only.
+The task-planning migration adds nullable columns without changing existing rows.
+
 ## Current limits
 
 No email verification, reset-email delivery, account deletion/export, analytics,

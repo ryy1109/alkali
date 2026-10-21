@@ -19,12 +19,15 @@ import {
 } from "@ryy1109/web-components";
 import AddRounded from "@mui/icons-material/AddRounded";
 import { requestJson } from "@/lib/client-api";
-import { displayDate, todayInSingapore } from "@/lib/dates";
+import { displayDate, displayEstimate, todayInSingapore } from "@/lib/dates";
 import { taskSchema } from "@/lib/validation";
 export type Task = {
   id: string;
   title: string;
   description: string | null;
+  resourceUrl: string | null;
+  estimatedMinutes: number | null;
+  startDate: string | null;
   subjectId: string | null;
   dueDate: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
@@ -35,6 +38,10 @@ type Subject = { id: string; name: string };
 type Form = {
   title: string;
   description: string;
+  resourceUrl: string;
+  estimatedHours: string;
+  estimatedMinutePart: string;
+  startDate: string;
   subjectId: string;
   dueDate: string;
   priority: Task["priority"];
@@ -50,6 +57,10 @@ function emptyForm(subjectId = ""): Form {
   return {
     title: "",
     description: "",
+    resourceUrl: "",
+    estimatedHours: "",
+    estimatedMinutePart: "",
+    startDate: "",
     subjectId,
     dueDate: todayInSingapore(),
     priority: "MEDIUM",
@@ -98,6 +109,10 @@ export function TasksView({
         : {
             title: task.title,
             description: task.description || "",
+            resourceUrl: task.resourceUrl || "",
+            estimatedHours: task.estimatedMinutes == null ? "" : String(Math.floor(task.estimatedMinutes / 60)),
+            estimatedMinutePart: task.estimatedMinutes == null ? "" : String(task.estimatedMinutes % 60),
+            startDate: task.startDate?.slice(0, 10) || "",
             subjectId: task.subjectId || "",
             dueDate: task.dueDate.slice(0, 10),
             priority: task.priority,
@@ -110,7 +125,21 @@ export function TasksView({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
-    const parsed = taskSchema.safeParse(form);
+    const hasEstimate = form.estimatedHours !== "" || form.estimatedMinutePart !== "";
+    const hours = Number(form.estimatedHours || 0);
+    const minutes = Number(form.estimatedMinutePart || 0);
+    if (hasEstimate && (!Number.isInteger(hours) || hours < 0 ||
+      !Number.isInteger(minutes) || minutes < 0 || minutes > 59)) {
+      setError("Use whole hours and minutes, with minutes between 0 and 59.");
+      return;
+    }
+    const payload = {
+      title: form.title, description: form.description, subjectId: form.subjectId,
+      dueDate: form.dueDate, startDate: form.startDate, resourceUrl: form.resourceUrl,
+      priority: form.priority, status: form.status,
+      estimatedMinutes: hasEstimate ? hours * 60 + minutes : null,
+    };
+    const parsed = taskSchema.safeParse(payload);
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
@@ -120,7 +149,7 @@ export function TasksView({
       await requestJson(
         "/api/tasks" + (editing && editing !== "new" ? "/" + editing.id : ""),
         editing === "new" ? "POST" : "PATCH",
-        form,
+        payload,
       );
       setEditing(null);
       router.refresh();
@@ -360,6 +389,20 @@ export function TasksView({
                   )}
                 </dd>
               </dl>
+              <dl>
+                <dt>Planned dates</dt>
+                <dd>{detail.startDate
+                  ? `${displayDate(detail.startDate)} – ${displayDate(detail.dueDate)}`
+                  : "No start date set"}</dd>
+                <dt>Estimated work time</dt>
+                <dd>{detail.estimatedMinutes == null ? "No estimate set" : displayEstimate(detail.estimatedMinutes)}</dd>
+                <dt>Resource link</dt>
+                <dd>{detail.resourceUrl ? (
+                  <a className="task-resource-link" href={detail.resourceUrl} target="_blank" rel="noopener noreferrer">
+                    {detail.resourceUrl} <span className="muted">(opens in a new tab)</span>
+                  </a>
+                ) : "No link added"}</dd>
+              </dl>
               <h2>Notes</h2>
               <p className="task-description">
                 {detail.description || "No description added."}
@@ -559,6 +602,47 @@ export function TasksView({
             fullWidth
             disabled={busy}
           />
+          <Input
+            id="task-resource-url"
+            label="Resource link (optional)"
+            type="url"
+            value={form.resourceUrl}
+            onChange={(e) => setForm({ ...form, resourceUrl: e.target.value })}
+            helperText="An HTTP or HTTPS link to instructions, references, or your work."
+            fullWidth
+            disabled={busy}
+            maxLength={2048}
+          />
+          <Section title="Work plan (optional)" headingLevel={3} spacing="small">
+            <p className="muted">Estimate your work time, plan a start date, or use both. Status stays under your control.</p>
+            <div className="form-two-columns">
+              <Input
+                id="task-estimated-hours" label="Estimated hours" type="number"
+                value={form.estimatedHours}
+                onChange={(e) => setForm({ ...form, estimatedHours: e.target.value })}
+                slotProps={{ htmlInput: { min: 0, max: 8760, step: 1 } }}
+                disabled={busy} fullWidth
+              />
+              <Input
+                id="task-estimated-minutes" label="Estimated minutes" type="number"
+                value={form.estimatedMinutePart}
+                onChange={(e) => setForm({ ...form, estimatedMinutePart: e.target.value })}
+                slotProps={{ htmlInput: { min: 0, max: 59, step: 1 } }}
+                disabled={busy} fullWidth
+              />
+            </div>
+            <p className="muted">Leave both fields empty for no estimate. Maximum: 8,760 hours.</p>
+            <DateInput
+              label="Start date (optional)"
+              value={form.startDate ? dayjs(form.startDate) : null}
+              onChange={(value) => setForm({ ...form,
+                startDate: value?.isValid() ? value.format("YYYY-MM-DD") : "",
+              })}
+              maxDate={form.dueDate ? dayjs(form.dueDate) : undefined}
+              format="DD/MM/YYYY" clearable fullWidth disabled={busy}
+              helperText="The due date is the end of your planned date range."
+            />
+          </Section>
           <DateInput
             label="Due date"
             value={form.dueDate ? dayjs(form.dueDate) : null}

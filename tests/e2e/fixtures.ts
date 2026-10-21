@@ -3,6 +3,7 @@ import process from "node:process";
 import { randomUUID } from "node:crypto";
 import { URL } from "node:url";
 import { test as base, expect } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../../src/generated/prisma/client";
 
@@ -12,8 +13,23 @@ type TestAccount = {
   password: string;
 };
 
-export const test = base.extend<{ account: TestAccount }>({
-  account: async ({ baseURL }, use) => {
+// The real signup limit stays enabled. API setup respects a rate-limit response.
+export async function signupAccount(request: APIRequestContext, account: TestAccount, baseURL: string) {
+  const create = () => request.post("/api/auth/sign-up/email", {
+    headers: { Origin: baseURL },
+    data: { ...account, confirmPassword: account.password, privacyAccepted: true },
+  });
+  let response = await create();
+  if (response.status() === 429) {
+    const seconds = Number(response.headers()["retry-after"] ?? response.headers()["x-retry-after"]);
+    const delay = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 60) : 60;
+    await new Promise((resolve) => setTimeout(resolve, (delay + 1) * 1000));
+    response = await create();
+  }
+  return response;
+}
+
+async function accountFixture({ baseURL }: { baseURL: string | undefined }, use: (account: TestAccount) => Promise<void>) {
     if (baseURL !== "http://localhost:3100") {
       throw new Error("Account tests require the isolated test server.");
     }
@@ -62,7 +78,11 @@ export const test = base.extend<{ account: TestAccount }>({
         await prisma.$disconnect();
       }
     }
-  },
+}
+
+export const test = base.extend<{ account: TestAccount; otherAccount: TestAccount }>({
+  account: accountFixture,
+  otherAccount: accountFixture,
 });
 
 export { expect };

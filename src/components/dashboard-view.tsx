@@ -13,6 +13,7 @@ import ChecklistRounded from "@mui/icons-material/ChecklistRounded";
 import TaskAltRounded from "@mui/icons-material/TaskAltRounded";
 import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
 import { displayDate } from "@/lib/dates";
+import { DeadlineCalendar, type CalendarTask } from "./deadline-calendar";
 type Upcoming = {
   id: string;
   title: string;
@@ -26,8 +27,11 @@ type Data = {
   completed: number;
   overdue: number;
   upcoming: Upcoming[];
+  calendarTasks: CalendarTask[];
 };
-export function DashboardView({ name, data }: { name: string; data: Data }) {
+export function DashboardView({ name, data, month, today }: {
+  name: string; data: Data; month: string; today: string;
+}) {
   const total = data.pending + data.completed;
   const percent = total ? Math.round((data.completed / total) * 100) : 0;
   const columns: TableColumn[] = [
@@ -110,6 +114,7 @@ export function DashboardView({ name, data }: { name: string; data: Data }) {
           />
         ))}
       </div>
+      <DeadlineCalendar key={month} month={month} today={today} tasks={data.calendarTasks} />
       <div className="dashboard-grid">
         <Section
           title="Coming up next"
