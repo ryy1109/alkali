@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button, Card, Checkbox, Input } from "@ryy1109/web-components";
 import CheckCircleOutlineRounded from "@mui/icons-material/CheckCircleOutlineRounded";
@@ -14,7 +13,6 @@ import {
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const signup = mode === "signup";
-  const router = useRouter();
   const [fields, setFields] = useState({
     name: "",
     email: "",
@@ -70,8 +68,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         );
         return;
       }
-      router.replace("/dashboard");
-      router.refresh();
+      // Load the new session in a fresh document without a competing refresh.
+      window.location.replace("/dashboard");
     } catch {
       setError("We couldn't connect. Check your connection and try again.");
     } finally {

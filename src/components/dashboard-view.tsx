@@ -114,7 +114,7 @@ export function DashboardView({ name, data }: { name: string; data: Data }) {
         <Section
           title="Coming up next"
           description="Pending tasks due today and over the next six days."
-          spacing="none"
+          spacing="medium"
           actions={
             <Link className="text-link" href="/tasks">
               View all tasks <ArrowForwardRounded fontSize="small" />
