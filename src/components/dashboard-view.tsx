@@ -114,8 +114,8 @@ export function DashboardView({ name, data, month, today }: {
           />
         ))}
       </div>
-      <DeadlineCalendar key={month} month={month} today={today} tasks={data.calendarTasks} />
       <div className="dashboard-grid">
+        <div className="dashboard-main">
         <Section
           title="Coming up next"
           description="Pending tasks due today and over the next six days."
@@ -161,6 +161,12 @@ export function DashboardView({ name, data, month, today }: {
             />
           )}
         </Section>
+          <p className="timezone-note">
+            Deadlines follow Asia/Singapore time. Completed tasks are excluded from
+            upcoming and overdue counts.
+          </p>
+          <DeadlineCalendar key={month} month={month} today={today} tasks={data.calendarTasks} />
+        </div>
         <div className="dashboard-aside">
           <Card
             className="progress-card"
@@ -204,10 +210,6 @@ export function DashboardView({ name, data, month, today }: {
           />
         </div>
       </div>
-      <p className="timezone-note">
-        Deadlines follow Asia/Singapore time. Completed tasks are excluded from
-        upcoming and overdue counts.
-      </p>
     </>
   );
 }

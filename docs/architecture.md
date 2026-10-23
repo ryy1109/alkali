@@ -56,9 +56,22 @@ Dashboard queries run in one transaction and use actual per-user records.
 
 The monthly calendar defaults to the current Singapore month; a validated
 YYYY-MM query selects another month (1900 through 9999). Invalid or repeated
-month parameters fall back to the current month. It queries all owned tasks
-within that month, including completed tasks, independently of the eight-item
-upcoming limit. The calendar places tasks on due dates, not across planned ranges.
+month parameters fall back to the current month. The dashboard loads all owned
+deadline metadata once (ID, title, due date, status), including completed tasks,
+independently of the eight-item upcoming limit. Other task details stay on their
+own pages. Previous/Next month and This month controls filter this private dataset
+locally, so empty, distant, and previously unvisited months work without network
+requests, including while offline after the dashboard loads. Native history
+retains the month in the URL; Back/Forward restores it without dashboard navigation.
+Reloading or returning from task editing loads fresh data. The optional authenticated
+GET /api/calendar endpoint still provides one month's data with private/no-store
+responses, but the calendar UI does not depend on it. Large datasets may eventually
+need a different loading strategy; no pagination is applied to deadline metadata.
+The compact calendar sits directly below upcoming tasks in the main dashboard
+column, beside the progress cards. Desktop dates show up to two linked task
+titles with status text; crowded dates offer a +N more control opening the full
+daily list. Phones show compact date counts with a complete monthly agenda
+grouped by date below the grid. Date buttons also open the daily dialog.
 
 ## Task work planning
 

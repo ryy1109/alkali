@@ -542,6 +542,7 @@ export function TasksView({
         </>
       )}
       <Modal
+        className="task-form-dialog"
         open={!!editing}
         onClose={() => {
           if (!busy) setEditing(null);
@@ -567,7 +568,7 @@ export function TasksView({
           },
         ]}
       >
-        <div className="form-stack">
+        <div className="form-stack task-form">
           <Input
             id="task-title"
             label="Task title"
@@ -584,13 +585,15 @@ export function TasksView({
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             maxLength={5000}
-            showCharacterCount
+            rows={3}
+            showCharacterCount={form.description.length > 0}
             fullWidth
             disabled={busy}
           />
           <Select
             id="task-subject"
             label="Subject"
+            size="small"
             value={form.subjectId}
             options={[
               { label: "No subject", value: "" },
@@ -608,60 +611,66 @@ export function TasksView({
             type="url"
             value={form.resourceUrl}
             onChange={(e) => setForm({ ...form, resourceUrl: e.target.value })}
-            helperText="An HTTP or HTTPS link to instructions, references, or your work."
+            helperText="Use an HTTP or HTTPS link to instructions, references, or your work."
             fullWidth
             disabled={busy}
-            maxLength={2048}
+            slotProps={{ htmlInput: { maxLength: 2048 } }}
           />
-          <Section title="Work plan (optional)" headingLevel={3} spacing="small">
-            <p className="muted">Estimate your work time, plan a start date, or use both. Status stays under your control.</p>
-            <div className="form-two-columns">
+          <fieldset className="task-work-plan">
+            <legend>Work plan <span>Optional</span></legend>
+            <p className="task-plan-intro">Give yourself time to focus. Add an estimate, a start date, or both.</p>
+            <div className="task-estimate-fields">
               <Input
                 id="task-estimated-hours" label="Estimated hours" type="number"
                 value={form.estimatedHours}
                 onChange={(e) => setForm({ ...form, estimatedHours: e.target.value })}
-                slotProps={{ htmlInput: { min: 0, max: 8760, step: 1 } }}
+                slotProps={{ htmlInput: { min: 0, max: 8760, step: 1, "aria-describedby": "task-estimate-help" } }}
                 disabled={busy} fullWidth
               />
               <Input
                 id="task-estimated-minutes" label="Estimated minutes" type="number"
                 value={form.estimatedMinutePart}
                 onChange={(e) => setForm({ ...form, estimatedMinutePart: e.target.value })}
-                slotProps={{ htmlInput: { min: 0, max: 59, step: 1 } }}
+                slotProps={{ htmlInput: { min: 0, max: 59, step: 1, "aria-describedby": "task-estimate-help" } }}
                 disabled={busy} fullWidth
               />
             </div>
-            <p className="muted">Leave both fields empty for no estimate. Maximum: 8,760 hours.</p>
-            <DateInput
-              label="Start date (optional)"
-              value={form.startDate ? dayjs(form.startDate) : null}
-              onChange={(value) => setForm({ ...form,
-                startDate: value?.isValid() ? value.format("YYYY-MM-DD") : "",
-              })}
-              maxDate={form.dueDate ? dayjs(form.dueDate) : undefined}
-              format="DD/MM/YYYY" clearable fullWidth disabled={busy}
-              helperText="The due date is the end of your planned date range."
-            />
-          </Section>
-          <DateInput
-            label="Due date"
-            value={form.dueDate ? dayjs(form.dueDate) : null}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                dueDate: value?.isValid() ? value.format("YYYY-MM-DD") : "",
-              })
-            }
-            format="DD/MM/YYYY"
-            required
-            fullWidth
-            disabled={busy}
-            helperText="Calendar date in Asia/Singapore."
-          />
+            <p id="task-estimate-help" className="task-field-help">Leave both empty if you're not sure yet.</p>
+            <div className="task-date-fields">
+              <DateInput
+                label="Start date (optional)"
+                value={form.startDate ? dayjs(form.startDate) : null}
+                onChange={(value) => setForm({
+                  ...form,
+                  startDate: value?.isValid() ? value.format("YYYY-MM-DD") : "",
+                })}
+                maxDate={form.dueDate ? dayjs(form.dueDate) : undefined}
+                format="DD/MM/YYYY"
+                clearable
+                fullWidth
+                disabled={busy}
+                helperText="When you plan to begin."
+              />
+              <DateInput
+                label="Due date"
+                value={form.dueDate ? dayjs(form.dueDate) : null}
+                onChange={(value) => setForm({
+                  ...form,
+                  dueDate: value?.isValid() ? value.format("YYYY-MM-DD") : "",
+                })}
+                format="DD/MM/YYYY"
+                required
+                fullWidth
+                disabled={busy}
+                helperText="Your deadline, in Asia/Singapore time."
+              />
+            </div>
+          </fieldset>
           <div className="form-two-columns">
             <Select
               id="task-priority"
               label="Priority"
+              size="small"
               value={form.priority}
               options={Object.entries(priorityLabels).map(([value, label]) => ({
                 value,
@@ -679,6 +688,7 @@ export function TasksView({
             <Select
               id="task-status"
               label="Status"
+              size="small"
               value={form.status}
               options={Object.entries(statusLabels).map(([value, label]) => ({
                 value,

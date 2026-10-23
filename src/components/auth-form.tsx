@@ -130,6 +130,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                 <Input
                   id="full-name"
                   label="Full name"
+                  slotProps={{ inputLabel: { shrink: true } }}
                   autoComplete="name"
                   required
                   fullWidth
@@ -143,6 +144,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <Input
                 id="email"
                 label="Email"
+                slotProps={{ inputLabel: { shrink: true } }}
                 type="email"
                 autoComplete="email"
                 required
@@ -167,6 +169,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <Input
                 id="password"
                 label="Password"
+                slotProps={{ inputLabel: { shrink: true } }}
                 type="password"
                 autoComplete={signup ? "new-password" : "current-password"}
                 showPasswordToggle
@@ -205,6 +208,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                   <Input
                     id="confirm-password"
                     label="Confirm password"
+                    slotProps={{ inputLabel: { shrink: true } }}
                     type="password"
                     autoComplete="new-password"
                     showPasswordToggle

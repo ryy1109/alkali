@@ -163,6 +163,7 @@ test("student can manage a task and see dashboard progress", async ({
 
   await test.step("Show planning details and clear optional values", async () => {
     await taskRow(editedTitle).getByRole("link", { name: editedTitle, exact: true }).click();
+    await expect(page).toHaveURL(/\/tasks\/[^/]+$/, { timeout: 30_000 });
     await expect(page.getByText("2 hours 15 minutes", { exact: true })).toBeVisible();
     const resource = page.getByRole("link", { name: /https:\/\/example.test\/revision/ });
     await expect(resource).toHaveAttribute("target", "_blank");

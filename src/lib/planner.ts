@@ -75,8 +75,7 @@ export async function completeTask(userId: string, id: string) {
     data: { status: "COMPLETED" },
   });
 }
-export async function dashboard(userId: string, month: string) {
-  const bounds = monthBounds(month);
+export async function dashboard(userId: string) {
   const today = todayInSingapore();
   const start = new Date(today + "T00:00:00.000Z");
   const end = new Date(addDays(today, 7) + "T00:00:00.000Z");
@@ -98,14 +97,22 @@ export async function dashboard(userId: string, month: string) {
         orderBy: { dueDate: "asc" },
         take: 8,
       }),
-      db().task.findMany({
-        where: { userId, dueDate: {
-          gte: new Date(bounds.start + "T00:00:00.000Z"),
-          lte: new Date(bounds.end + "T00:00:00.000Z"),
-        } },
-        select: { id: true, title: true, dueDate: true, status: true },
-        orderBy: [{ dueDate: "asc" }, { title: "asc" }, { id: "asc" }],
-      }),
+      listCalendarTasks(userId),
     ]);
   return { subjects, pending, completed, overdue, upcoming, calendarTasks };
+}
+
+export function listCalendarTasks(userId: string, month?: string) {
+  const bounds = month ? monthBounds(month) : null;
+  return db().task.findMany({
+    where: {
+      userId,
+      ...(bounds ? { dueDate: {
+        gte: new Date(bounds.start + "T00:00:00.000Z"),
+        lte: new Date(bounds.end + "T00:00:00.000Z"),
+      } } : {}),
+    },
+    select: { id: true, title: true, dueDate: true, status: true },
+    orderBy: [{ dueDate: "asc" }, { title: "asc" }, { id: "asc" }],
+  });
 }

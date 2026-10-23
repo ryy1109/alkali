@@ -13,7 +13,7 @@ export default async function DashboardPage({ searchParams }: {
       name={user.name}
       month={month}
       today={today}
-      data={JSON.parse(JSON.stringify(await dashboard(user.id, month)))}
+      data={JSON.parse(JSON.stringify(await dashboard(user.id)))}
     />
   );
 }
