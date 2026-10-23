@@ -17,15 +17,15 @@ DateInput uses the Dayjs localization adapter.
 
 - Header: public and authenticated header.
 - Button: primary, secondary, icon-only, loading, and destructive actions.
-- Input: authentication, subjects, task title, and search.
+- Input: authentication, subjects, task title, resource link, effort estimate, and search.
 - Card: authentication panel, subject cards, dashboard summaries, public content.
 - Checkbox: Privacy Policy acknowledgement and task completion.
 - Breadcrumbs: planner hierarchy.
-- Modal: subject/task forms, deletion confirmations, profile.
+- Modal: subject/task forms, deletion confirmations, profile, calendar daily deadlines.
 - Table: upcoming deadlines and task listing.
 - Select: subject, status, priority, filters.
 - Textarea: task descriptions.
-- DateInput: due dates.
+- DateInput: due dates and optional planned start dates.
 - Section: grouped content and empty states.
 - Spinner: loading the protected workspace.
 
@@ -43,5 +43,9 @@ Header's package CSS hides primary actions on narrow screens; shared styles
 restore them. Navigation is a separate accessible responsive planner sidebar.
 MUI icons fill icon capabilities, and providers handle framework integration.
 No replacement component system has been introduced.
+
+The deadline calendar uses a semantic month table with package Section, Button,
+and Modal controls. The package does not export a month calendar, so its grid
+is application-owned and requires no additional calendar dependency.
 
 Section renders its title as a heading and emptyMessage as a paragraph. Pass plain text titles and use children for rich empty-state layouts to preserve valid HTML.

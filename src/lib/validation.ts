@@ -67,9 +67,27 @@ export const dateOnlySchema = z
       value <= "9999-12-31"
     );
   }, "Choose a valid date.");
+const resourceUrlSchema = z.string().trim().max(2048).refine((value) => {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) &&
+      !!url.hostname && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}, "Enter an HTTP or HTTPS link without a username or password.");
+
 export const taskSchema = z.object({
   title: z.string().trim().min(1, "Enter a task title.").max(200),
   description: blankToNull(5000),
+  resourceUrl: resourceUrlSchema.nullable().optional().transform((v) => v || null),
+  estimatedMinutes: z.number().int("Use whole minutes.")
+    .min(1, "Enter at least one minute, or leave the estimate empty.")
+    .max(525600, "Use at most 8,760 hours of estimated work.").nullable().optional()
+    .transform((v) => v ?? null),
+  startDate: z.union([dateOnlySchema, z.literal(""), z.null()]).optional()
+    .transform((v) => v || null),
   subjectId: z
     .string()
     .max(100)
@@ -79,4 +97,7 @@ export const taskSchema = z.object({
   dueDate: dateOnlySchema,
   priority: z.enum(priorities),
   status: z.enum(statuses),
+}).refine((task) => !task.startDate || task.startDate <= task.dueDate, {
+  path: ["startDate"],
+  message: "Start date must be on or before the due date.",
 });

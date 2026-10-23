@@ -50,7 +50,18 @@ npm test
 npm run build
 ```
 
-Unit tests cover validation and deadline rules. Browser automation is deferred.
+Unit tests cover validation, task planning, and deadline/calendar rules.
+For browser tests, configure TEST_DATABASE_URL for local alkali_test, then run:
+
+```powershell
+npx --no-install playwright install chromium
+npx --no-install playwright test --project=chromium --workers=1
+```
+
+Playwright applies pending migrations to alkali_test, starts an isolated server
+at localhost:3100 using .next-test, and cleans up its generated test accounts.
+Browser tests require the generated Prisma Client and a running local MySQL.
+Reports and traces are ignored; CI does not currently run browser tests.
 
 ESLint covers JavaScript, TypeScript, and React Hooks rules.
 Next.js-specific and JSX accessibility lint rules are not configured because
@@ -60,6 +71,10 @@ the bundled plugins currently declare incompatible ESLint 10 peer requirements.
 
 Signup/login/logout, private subjects and tasks, date-only due dates, priorities,
 statuses, filtering, sorting, and dashboard summaries use per-user MySQL data.
+Tasks also support one optional HTTP(S) resource link, an estimated work time,
+and an optional start date ending at the existing due date. Estimates and date
+ranges can be used together; status remains manual. The dashboard's monthly
+deadline calendar includes completed tasks and supports month/day navigation.
 The supplied logo guides the purple, lavender, and mint design.
 The primary UI package is @ryy1109/web-components; see docs/components.md.
 

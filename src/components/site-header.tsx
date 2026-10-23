@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Header, Button, Modal } from "@ryy1109/web-components";
 import PersonOutlineRounded from "@mui/icons-material/PersonOutlineRounded";
@@ -15,7 +15,6 @@ export function SiteHeader({
 }: {
   user?: { name: string; email: string };
 }) {
-  const router = useRouter();
   const [profile, setProfile] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -25,8 +24,8 @@ export function SiteHeader({
     try {
       const result = await authClient.signOut();
       if (result.error) throw new Error();
-      router.replace("/login");
-      router.refresh();
+      // Discard the authenticated router cache when ending this session.
+      window.location.replace("/login");
     } catch {
       setError("We couldn't log you out. Please try again.");
     } finally {

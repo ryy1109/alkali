@@ -3,7 +3,7 @@ import type { z } from "zod";
 import { db } from "./db";
 import { HttpError } from "./http";
 import { subjectSchema, taskSchema } from "./validation";
-import { addDays, todayInSingapore } from "./dates";
+import { addDays, monthBounds, todayInSingapore } from "./dates";
 
 export async function listSubjects(userId: string) {
   return db().subject.findMany({
@@ -59,6 +59,7 @@ export async function saveTask(userId: string, input: unknown, id?: string) {
     const data = {
       ...parsed,
       dueDate: new Date(parsed.dueDate + "T00:00:00.000Z"),
+      startDate: parsed.startDate ? new Date(parsed.startDate + "T00:00:00.000Z") : null,
     };
     return id
       ? tx.task.update({ where: { id, userId }, data })
@@ -78,7 +79,7 @@ export async function dashboard(userId: string) {
   const today = todayInSingapore();
   const start = new Date(today + "T00:00:00.000Z");
   const end = new Date(addDays(today, 7) + "T00:00:00.000Z");
-  const [subjects, pending, completed, overdue, upcoming] =
+  const [subjects, pending, completed, overdue, upcoming, calendarTasks] =
     await db().$transaction([
       db().subject.count({ where: { userId } }),
       db().task.count({ where: { userId, status: { not: "COMPLETED" } } }),
@@ -96,6 +97,22 @@ export async function dashboard(userId: string) {
         orderBy: { dueDate: "asc" },
         take: 8,
       }),
+      listCalendarTasks(userId),
     ]);
-  return { subjects, pending, completed, overdue, upcoming };
+  return { subjects, pending, completed, overdue, upcoming, calendarTasks };
+}
+
+export function listCalendarTasks(userId: string, month?: string) {
+  const bounds = month ? monthBounds(month) : null;
+  return db().task.findMany({
+    where: {
+      userId,
+      ...(bounds ? { dueDate: {
+        gte: new Date(bounds.start + "T00:00:00.000Z"),
+        lte: new Date(bounds.end + "T00:00:00.000Z"),
+      } } : {}),
+    },
+    select: { id: true, title: true, dueDate: true, status: true },
+    orderBy: [{ dueDate: "asc" }, { title: "asc" }, { id: "asc" }],
+  });
 }
